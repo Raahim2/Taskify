@@ -1,91 +1,64 @@
 import { useState, useEffect } from 'react';
+import Note from '../components/Note';
 
 export default function Home() {
-  const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
-  const [editingTask, setEditingTask] = useState(null);
-  const [editText, setEditText] = useState('');
+  const [notes, setNotes] = useState([]);
+  const [newNoteText, setNewNoteText] = useState('');
 
   useEffect(() => {
-    const storedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    setTasks(storedTasks);
+    const storedNotes = JSON.parse(localStorage.getItem('notes')) || [];
+    setNotes(storedNotes);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    localStorage.setItem('notes', JSON.stringify(notes));
+  }, [notes]);
 
-  const handleInputChange = (event) => {
-    setNewTask(event.target.value);
+  const handleNoteChange = (event) => {
+    setNewNoteText(event.target.value);
   };
 
-  const handleAddTask = () => {
-    if (newTask.trim() !== '') {
-      setTasks([...tasks, { text: newTask, completed: false }]);
-      setNewTask('');
+  const handleAddNote = () => {
+    if (newNoteText.trim() !== '') {
+      const newNote = {
+        id: Date.now(),
+        text: newNoteText,
+      };
+      setNotes([...notes, newNote]);
+      setNewNoteText('');
     }
   };
 
-  const handleTaskCompletion = (index) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[index].completed = !updatedTasks[index].completed;
-    setTasks(updatedTasks);
+  const handleNoteUpdate = (id, newText) => {
+    const updatedNotes = notes.map((note) => {
+      if (note.id === id) {
+        return { ...note, text: newText };
+      }
+      return note;
+    });
+    setNotes(updatedNotes);
   };
 
-  const handleEditTask = (index) => {
-    setEditingTask(index);
-    setEditText(tasks[index].text);
-  };
-
-  const handleSaveEdit = (index) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[index].text = editText;
-    setTasks(updatedTasks);
-    setEditingTask(null);
-    setEditText('');
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTask(null);
-    setEditText('');
-  };
-
-  const handleDeleteTask = (index) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-    setTasks(updatedTasks);
+  const handleNoteDelete = (id) => {
+    const updatedNotes = notes.filter((note) => note.id !== id);
+    setNotes(updatedNotes);
   };
 
   return (
     <div>
-      <h1>To-Do List</h1>
+      <h1>Notes App</h1>
       <div>
-        <input type="text" value={newTask} onChange={handleInputChange} placeholder="Add new task" />
-        <button onClick={handleAddTask}>Add Task</button>
+        <textarea
+          value={newNoteText}
+          onChange={handleNoteChange}
+          placeholder="Enter your note..."
+        />
+        <button onClick={handleAddNote}>Add Note</button>
       </div>
       <ul>
-        {tasks.map((task, index) => (
-          <li key={index} style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>
-            <input type="checkbox" checked={task.completed} onChange={() => handleTaskCompletion(index)} />
-            {editingTask === index ? (
-              <input
-                type="text"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-              />
-            ) : (
-              task.text
-            )}
-            {editingTask === index ? (
-              <>
-                <button onClick={() => handleSaveEdit(index)}>Save</button>
-                <button onClick={handleCancelEdit}>Cancel</button>
-              </>
-            ) : (
-              <>
-                <button onClick={() => handleEditTask(index)}>Edit</button>
-                <button onClick={() => handleDeleteTask(index)}>Delete</button>
-              </>
-            )}
+        {notes.map((note) => (
+          <li key={note.id}>
+            <Note text={note.text} onUpdate={(updatedText) => handleNoteUpdate(note.id, updatedText)} onDelete={() => handleNoteDelete(note.id)} />
           </li>
         ))}
       </ul>
